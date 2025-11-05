@@ -36,7 +36,7 @@ export default function Page({ params }: PageProps) {
 
   const [page, setPage] = useState<number>(pageParam);
 
-  const { data: storyIds = [], isLoading: isStoryIdsLoading } = useQuery({
+  const { data: storyIds = [], isLoading: isStoryIdsLoading, error: storyIdsError } = useQuery({
     queryKey: ['/news/list', tab] as const,
     async queryFn({ queryKey: [, tab] }) {
       const response = await fetch(`https://hacker-news.firebaseio.com/v0/${tab}stories.json`);
@@ -47,27 +47,32 @@ export default function Page({ params }: PageProps) {
     },
   });
 
-  const { data: stories = [], isLoading: isStoriesLoading } = useQuery({
+  const { data: stories = [], isLoading: isStoriesLoading, error: storiesError } = useQuery({
     queryKey: ['/news/list', page] as const,
     async queryFn({ queryKey: [, page] }) {
       const startIndex = (page - 1) * LIMIT;
       const endIndex = startIndex + LIMIT;
       const pageIds = storyIds.slice(startIndex, endIndex);
 
+      type RawStory = {
+        id: number;
+        title: string;
+        by: string;
+        time: number;
+        url: string;
+      };
+
       const stories = await Promise.all(pageIds.map(async (id) => {
         const res = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
         if (!res.ok) {
-          throw new Error('Network response was not ok');
+          return undefined;
         }
-        return res.json() as Promise<{
-          id: number;
-          title: string;
-          by: string;
-          time: number;
-          url: string;
-        }>;
+        return res.json() as Promise<RawStory>;
       }));
-      return stories.map(({ id, title, by, time, url }): Story => ({
+      if (stories.includes(undefined)) {
+        throw new Error();
+      }
+      return (stories as RawStory[]).map(({ id, title, by, time, url }): Story => ({
         id,
         title,
         by,
@@ -77,6 +82,15 @@ export default function Page({ params }: PageProps) {
     },
     enabled: storyIds.length > 0,
   });
+
+  useEffect(() => {
+    if (storyIdsError) {
+      alert(storyIdsError.message);
+    }
+    if (storiesError) {
+      alert(storiesError.message);
+    }
+  }, [storyIdsError, storiesError]);
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
