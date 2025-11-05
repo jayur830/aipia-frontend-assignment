@@ -17,7 +17,6 @@ export default function Page() {
   const [tab, setTab] = useState<'top' | 'new' | 'best'>('top');
   const [stories, setStories] = useState<number[]>([]);
   const [page, setPage] = useState<number>(pageParam);
-  const [pageGroup, setPageGroup] = useState<number>(Math.floor((pageParam - 1) / 10));
 
   useEffect(() => {
     fetch(`https://hacker-news.firebaseio.com/v0/${tab}stories.json`)
@@ -29,7 +28,6 @@ export default function Page() {
       })
       .then(setStories);
     setPage(1);
-    setPageGroup(0);
     window.history.replaceState(null, '', '?page=1');
   }, [tab]);
 
@@ -64,27 +62,23 @@ export default function Page() {
       <Pagination>
         <PaginationContent>
           <PaginationItem>
-            <PaginationFirst
-              onClick={() => {
-                setPageGroup(0);
-                setPage(1);
-              }}
-            />
+            <PaginationFirst onClick={() => setPage(1)} />
           </PaginationItem>
           <PaginationItem>
             <PaginationPrevious
               onClick={() => {
-                if (pageGroup > 0) {
-                  setPageGroup(pageGroup - 1);
-                  setPage(pageGroup * 10);
+                const currentPageGroup = Math.floor((page - 1) / 10);
+                if (currentPageGroup > 0) {
+                  setPage((currentPageGroup - 1) * 10 + 1);
                 }
               }}
             />
           </PaginationItem>
           {(() => {
             const totalPages = Math.ceil(stories.length / LIMIT);
-            const startPage = pageGroup * 10 + 1;
-            const endPage = Math.min((pageGroup + 1) * 10, totalPages);
+            const currentPageGroup = Math.floor((page - 1) / 10);
+            const startPage = currentPageGroup * 10 + 1;
+            const endPage = Math.min((currentPageGroup + 1) * 10, totalPages);
             return Array.from({ length: endPage - startPage + 1 }).map((_, index) => {
               const pageNumber = startPage + index;
               return (
@@ -103,9 +97,9 @@ export default function Page() {
             <PaginationNext
               onClick={() => {
                 const totalPages = Math.ceil(stories.length / LIMIT);
-                if ((pageGroup + 1) * 10 < totalPages) {
-                  setPageGroup(pageGroup + 1);
-                  setPage((pageGroup + 1) * 10 + 1);
+                const currentPageGroup = Math.floor((page - 1) / 10);
+                if ((currentPageGroup + 1) * 10 < totalPages) {
+                  setPage((currentPageGroup + 1) * 10 + 1);
                 }
               }}
             />
@@ -114,8 +108,6 @@ export default function Page() {
             <PaginationLast
               onClick={() => {
                 const totalPages = Math.ceil(stories.length / LIMIT);
-                const lastPageGroup = Math.floor((totalPages - 1) / 10);
-                setPageGroup(lastPageGroup);
                 setPage(totalPages);
               }}
             />
