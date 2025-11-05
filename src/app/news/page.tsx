@@ -103,9 +103,9 @@ export default function Page() {
       <div className="flex flex-col gap-2">
         {stories.map(({ id, title, by, time }) => (
           <Link href={`news/${id}`} key={id} passHref>
-            <Card className="cursor-pointer flex flex-row">
+            <Card className="cursor-pointer flex flex-row items-center">
               <CardHeader className="w-12">
-                <Image alt="" height={48} src="https://picsum.photos/seed/1/48" width={48} />
+                <Image alt={title} className="max-w-12 h-12" height={48} src={`https://picsum.photos/seed/${id}/48`} unoptimized width={48} />
               </CardHeader>
               <CardContent>
                 <h3 className="font-bold text-[20px]">{title}</h3>
