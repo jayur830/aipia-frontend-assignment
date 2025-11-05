@@ -106,7 +106,7 @@ export default function Page({ params }: PageProps) {
       <hr />
       <div className="flex flex-col gap-2">
         {stories.map(({ id, title, by, time }) => (
-          <Link href={`/news/${tab}/${id}`} key={id} passHref>
+          <Link href={`/news/${id}`} key={id} passHref>
             <Card className="cursor-pointer flex flex-row items-center">
               <CardHeader className="w-12">
                 <Image alt={title} className="max-w-12 h-12" height={48} src={`https://picsum.photos/seed/${id}/48`} unoptimized width={48} />
