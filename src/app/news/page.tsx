@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { Card } from '@/components/ui/card';
@@ -9,10 +10,14 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 const LIMIT = 10;
 
 export default function Page() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pageParam = parseInt(searchParams.get('page') || '1', 10);
+
   const [tab, setTab] = useState<'top' | 'new' | 'best'>('top');
   const [stories, setStories] = useState<number[]>([]);
-  const [page, setPage] = useState<number>(1);
-  const [pageGroup, setPageGroup] = useState<number>(0);
+  const [page, setPage] = useState<number>(pageParam);
+  const [pageGroup, setPageGroup] = useState<number>(Math.floor((pageParam - 1) / 10));
 
   useEffect(() => {
     fetch(`https://hacker-news.firebaseio.com/v0/${tab}stories.json`)
@@ -25,7 +30,14 @@ export default function Page() {
       .then(setStories);
     setPage(1);
     setPageGroup(0);
+    window.history.replaceState(null, '', '?page=1');
   }, [tab]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', page.toString());
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [page, router, searchParams]);
 
   return (
     <div className="flex flex-col gap-4">
