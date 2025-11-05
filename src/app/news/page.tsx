@@ -2,6 +2,7 @@
 
 import dayjs from 'dayjs';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -102,16 +103,18 @@ export default function Page() {
       <hr />
       <div className="flex flex-col gap-2">
         {stories.map(({ id, title, by, time }) => (
-          <Card className="flex flex-row" key={id}>
-            <CardHeader className="w-12">
-              <Image alt="" height={48} src="https://picsum.photos/seed/1/48" width={48} />
-            </CardHeader>
-            <CardContent>
-              <h3 className="font-bold text-[20px]">{title}</h3>
-              <i className="text-sm text-gray-500">{by}</i>
-              <p className="text-sm">{time}</p>
-            </CardContent>
-          </Card>
+          <Link href={`news/${id}`} key={id} passHref>
+            <Card className="cursor-pointer flex flex-row">
+              <CardHeader className="w-12">
+                <Image alt="" height={48} src="https://picsum.photos/seed/1/48" width={48} />
+              </CardHeader>
+              <CardContent>
+                <h3 className="font-bold text-[20px]">{title}</h3>
+                <i className="text-sm text-gray-500">{by}</i>
+                <p className="text-sm">{time}</p>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
       <NewsPagination
