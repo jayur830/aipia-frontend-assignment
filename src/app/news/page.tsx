@@ -1,13 +1,23 @@
 'use client';
 
+import dayjs from 'dayjs';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Pagination, PaginationContent, PaginationFirst, PaginationItem, PaginationLast, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const LIMIT = 10;
+
+interface Story {
+  id: number;
+  title: string;
+  by: string;
+  time: string;
+  url: string;
+}
 
 export default function Page() {
   const router = useRouter();
@@ -15,21 +25,42 @@ export default function Page() {
   const pageParam = parseInt(searchParams.get('page') || '1', 10);
 
   const [tab, setTab] = useState<'top' | 'new' | 'best'>('top');
-  const [stories, setStories] = useState<number[]>([]);
+  const [stories, setStories] = useState<Story[]>([]);
   const [page, setPage] = useState<number>(pageParam);
 
+  const fetchStories = useCallback(async () => {
+    const response = await fetch(`https://hacker-news.firebaseio.com/v0/${tab}stories.json`);
+    if (!response.ok) {
+      throw new Error();
+    }
+    const idList = await response.json() as number[];
+    const stories = await Promise.all(idList.slice(0, 10).map(async (id) => {
+      const res = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json() as Promise<{
+        id: number;
+        title: string;
+        by: string;
+        time: number;
+        url: string;
+      }>;
+    }));
+    setStories(stories.map(({ id, title, by, time, url }) => ({
+      id,
+      title,
+      by,
+      time: dayjs(time).format('YYYY-MM-DD'),
+      url,
+    })));
+  }, [tab]);
+
   useEffect(() => {
-    fetch(`https://hacker-news.firebaseio.com/v0/${tab}stories.json`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(setStories);
+    fetchStories();
     setPage(1);
     window.history.replaceState(null, '', '?page=1');
-  }, [tab]);
+  }, [fetchStories]);
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -55,8 +86,17 @@ export default function Page() {
       </Tabs>
       <hr />
       <div className="flex flex-col gap-2">
-        {stories.slice((page - 1) * LIMIT, page * LIMIT).map((storyId) => (
-          <Card key={storyId}>{storyId}</Card>
+        {stories.slice((page - 1) * LIMIT, page * LIMIT).map(({ id, title, by, time }) => (
+          <Card className="flex flex-row" key={id}>
+            <CardHeader className="w-12">
+              <Image alt="" height={48} src="https://picsum.photos/seed/1/48" unoptimized width={48} />
+            </CardHeader>
+            <CardContent>
+              <h3 className="font-bold text-[20pt]">{title}</h3>
+              <i className="text-sm text-gray-500">{by}</i>
+              <p className="text-sm">{time}</p>
+            </CardContent>
+          </Card>
         ))}
       </div>
       <Pagination>
