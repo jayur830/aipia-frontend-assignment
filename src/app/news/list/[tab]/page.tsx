@@ -38,6 +38,7 @@ export default function Page({ params }: PageProps) {
 
   const { data: storyIds = [], isLoading: isStoryIdsLoading, error: storyIdsError } = useQuery({
     queryKey: ['/news/list', tab] as const,
+    staleTime: 5 * 60 * 1000,
     async queryFn({ queryKey: [, tab] }) {
       const response = await fetch(`https://hacker-news.firebaseio.com/v0/${tab}stories.json`);
       if (!response.ok) {
@@ -49,6 +50,7 @@ export default function Page({ params }: PageProps) {
 
   const { data: stories = [], isLoading: isStoriesLoading, error: storiesError } = useQuery({
     queryKey: ['/news/list', page] as const,
+    staleTime: 5 * 60 * 1000,
     async queryFn({ queryKey: [, page] }) {
       const startIndex = (page - 1) * LIMIT;
       const endIndex = startIndex + LIMIT;
@@ -122,7 +124,7 @@ export default function Page({ params }: PageProps) {
             <Link href={`/news/${id}`} key={id} passHref>
               <Card className="cursor-pointer flex flex-row items-center">
                 <CardHeader className="w-12">
-                  <Image alt={title} className="max-w-12 h-12" height={48} src={`https://picsum.photos/seed/${id}/48`} unoptimized width={48} />
+                  <Image alt={title} className="max-w-12 h-12" height={48} src={`https://picsum.photos/seed/${id}/48`} width={48} />
                 </CardHeader>
                 <CardContent>
                   <h3 className="font-bold text-[20px]">{title}</h3>
