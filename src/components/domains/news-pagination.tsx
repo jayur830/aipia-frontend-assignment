@@ -2,7 +2,7 @@ import { Pagination, PaginationContent, PaginationFirst, PaginationItem, Paginat
 
 interface NewsPaginationProps {
   page: number;
-  onPageChange: (page: number) => void;
+  onPageChange(page: number): void;
   totalItems: number;
   itemsPerPage: number;
 }
