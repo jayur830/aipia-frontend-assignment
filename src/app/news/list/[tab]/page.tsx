@@ -49,9 +49,9 @@ export default function Page({ params }: PageProps) {
   });
 
   const { data: stories = [], isLoading: isStoriesLoading, error: storiesError } = useQuery({
-    queryKey: ['/news/list', page] as const,
+    queryKey: ['/news/list', storyIds, page] as const,
     staleTime: 5 * 60 * 1000,
-    async queryFn({ queryKey: [, page] }) {
+    async queryFn({ queryKey: [, storyIds, page] }) {
       const startIndex = (page - 1) * LIMIT;
       const endIndex = startIndex + LIMIT;
       const pageIds = storyIds.slice(startIndex, endIndex);
