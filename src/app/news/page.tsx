@@ -86,7 +86,6 @@ export default function Page() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-4xl font-bold my-4">AIPIA News</h1>
       <Tabs
         defaultValue="top"
         onValueChange={(value) => {
