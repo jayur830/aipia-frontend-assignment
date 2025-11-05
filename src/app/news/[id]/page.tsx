@@ -1,7 +1,10 @@
 import dayjs from 'dayjs';
+import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 import Back from '@/components/domains/back';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -30,8 +33,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <p className="text-[14px]">{dayjs(data.time * 1000).format('YYYY-MM-DD')}</p>
       <hr className="my-4" />
       <p>score: {data.score}</p>
-      {data.url && <Link href={data.url} target="_blank">{data.url}</Link>}
-      {data.text && <div className="whitespace-pre-line mt-3" dangerouslySetInnerHTML={{ __html: data.text }} />}
+      {data.url && (
+        <p>
+          Link: <Link href={data.url} passHref target="_blank"><Button size="sm" variant="outline"><ExternalLink size={16} /></Button></Link>
+        </p>
+      )}
+      {data.text && <Card className="whitespace-pre-line mt-3 px-3" dangerouslySetInnerHTML={{ __html: data.text }} />}
     </div>
   );
 }
