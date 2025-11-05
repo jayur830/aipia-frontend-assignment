@@ -25,16 +25,25 @@ export default function Page() {
   const pageParam = parseInt(searchParams.get('page') || '1', 10);
 
   const [tab, setTab] = useState<'top' | 'new' | 'best'>('top');
+  const [storyIds, setStoryIds] = useState<number[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [page, setPage] = useState<number>(pageParam);
 
-  const fetchStories = useCallback(async () => {
+  const fetchStoryIds = useCallback(async () => {
     const response = await fetch(`https://hacker-news.firebaseio.com/v0/${tab}stories.json`);
     if (!response.ok) {
       throw new Error();
     }
     const idList = await response.json() as number[];
-    const stories = await Promise.all(idList.slice(0, 10).map(async (id) => {
+    setStoryIds(idList);
+  }, [tab]);
+
+  const fetchPageStories = useCallback(async () => {
+    const startIndex = (page - 1) * LIMIT;
+    const endIndex = startIndex + LIMIT;
+    const pageIds = storyIds.slice(startIndex, endIndex);
+
+    const stories = await Promise.all(pageIds.map(async (id) => {
       const res = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
       if (!res.ok) {
         throw new Error('Network response was not ok');
@@ -51,16 +60,22 @@ export default function Page() {
       id,
       title,
       by,
-      time: dayjs(time).format('YYYY-MM-DD'),
+      time: dayjs(time * 1000).format('YYYY-MM-DD'),
       url,
     })));
-  }, [tab]);
+  }, [page, storyIds]);
 
   useEffect(() => {
-    fetchStories();
+    fetchStoryIds();
     setPage(1);
     window.history.replaceState(null, '', '?page=1');
-  }, [fetchStories]);
+  }, [tab, fetchStoryIds]);
+
+  useEffect(() => {
+    if (storyIds.length > 0) {
+      fetchPageStories();
+    }
+  }, [page, storyIds, fetchPageStories]);
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -86,13 +101,13 @@ export default function Page() {
       </Tabs>
       <hr />
       <div className="flex flex-col gap-2">
-        {stories.slice((page - 1) * LIMIT, page * LIMIT).map(({ id, title, by, time }) => (
+        {stories.map(({ id, title, by, time }) => (
           <Card className="flex flex-row" key={id}>
             <CardHeader className="w-12">
               <Image alt="" height={48} src="https://picsum.photos/seed/1/48" unoptimized width={48} />
             </CardHeader>
             <CardContent>
-              <h3 className="font-bold text-[20pt]">{title}</h3>
+              <h3 className="font-bold text-[20px]">{title}</h3>
               <i className="text-sm text-gray-500">{by}</i>
               <p className="text-sm">{time}</p>
             </CardContent>
@@ -115,7 +130,7 @@ export default function Page() {
             />
           </PaginationItem>
           {(() => {
-            const totalPages = Math.ceil(stories.length / LIMIT);
+            const totalPages = Math.ceil(storyIds.length / LIMIT);
             const currentPageGroup = Math.floor((page - 1) / 10);
             const startPage = currentPageGroup * 10 + 1;
             const endPage = Math.min((currentPageGroup + 1) * 10, totalPages);
@@ -136,7 +151,7 @@ export default function Page() {
           <PaginationItem>
             <PaginationNext
               onClick={() => {
-                const totalPages = Math.ceil(stories.length / LIMIT);
+                const totalPages = Math.ceil(storyIds.length / LIMIT);
                 const currentPageGroup = Math.floor((page - 1) / 10);
                 if ((currentPageGroup + 1) * 10 < totalPages) {
                   setPage((currentPageGroup + 1) * 10 + 1);
@@ -147,7 +162,7 @@ export default function Page() {
           <PaginationItem>
             <PaginationLast
               onClick={() => {
-                const totalPages = Math.ceil(stories.length / LIMIT);
+                const totalPages = Math.ceil(storyIds.length / LIMIT);
                 setPage(totalPages);
               }}
             />
