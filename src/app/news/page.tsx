@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
 export default function Page() {
-  redirect('/news/list/top');
+  redirect('/news/list/top?page=1');
 }
