@@ -1,10 +1,11 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 
 import { NewsListSkeleton } from '@/components/domains/news-list-skeleton';
 import { NewsPagination } from '@/components/domains/news-pagination';
@@ -33,60 +34,49 @@ export default function Page({ params }: PageProps) {
   const pageParam = parseInt(searchParams.get('page') || '1', 10);
   const { tab } = use(params);
 
-  const [storyIds, setStoryIds] = useState<number[]>([]);
-  const [stories, setStories] = useState<Story[]>([]);
   const [page, setPage] = useState<number>(pageParam);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const fetchStoryIds = useCallback(async () => {
-    setIsLoading(true);
-    const response = await fetch(`https://hacker-news.firebaseio.com/v0/${tab}stories.json`);
-    if (!response.ok) {
-      throw new Error();
-    }
-    const idList = await response.json() as number[];
-    setStoryIds(idList);
-  }, [tab]);
-
-  const fetchPageStories = useCallback(async (page: number) => {
-    setIsLoading(true);
-    const startIndex = (page - 1) * LIMIT;
-    const endIndex = startIndex + LIMIT;
-    const pageIds = storyIds.slice(startIndex, endIndex);
-
-    const stories = await Promise.all(pageIds.map(async (id) => {
-      const res = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
-      if (!res.ok) {
-        throw new Error('Network response was not ok');
+  const { data: storyIds = [], isLoading: isStoryIdsLoading } = useQuery({
+    queryKey: ['/news/list', tab] as const,
+    async queryFn({ queryKey: [, tab] }) {
+      const response = await fetch(`https://hacker-news.firebaseio.com/v0/${tab}stories.json`);
+      if (!response.ok) {
+        throw new Error();
       }
-      return res.json() as Promise<{
-        id: number;
-        title: string;
-        by: string;
-        time: number;
-        url: string;
-      }>;
-    }));
-    setStories(stories.map(({ id, title, by, time, url }) => ({
-      id,
-      title,
-      by,
-      time: dayjs(time * 1000).format('YYYY-MM-DD'),
-      url,
-    })));
-    setIsLoading(false);
-  }, [storyIds]);
+      return response.json() as Promise<number[]>;
+    },
+  });
 
-  useEffect(() => {
-    fetchStoryIds();
-    setPage(1);
-  }, [fetchStoryIds]);
+  const { data: stories = [], isLoading: isStoriesLoading } = useQuery({
+    queryKey: ['/news/list', page] as const,
+    async queryFn({ queryKey: [, page] }) {
+      const startIndex = (page - 1) * LIMIT;
+      const endIndex = startIndex + LIMIT;
+      const pageIds = storyIds.slice(startIndex, endIndex);
 
-  useEffect(() => {
-    if (storyIds.length > 0) {
-      fetchPageStories(page);
-    }
-  }, [page, storyIds, fetchPageStories]);
+      const stories = await Promise.all(pageIds.map(async (id) => {
+        const res = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+        if (!res.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return res.json() as Promise<{
+          id: number;
+          title: string;
+          by: string;
+          time: number;
+          url: string;
+        }>;
+      }));
+      return stories.map(({ id, title, by, time, url }): Story => ({
+        id,
+        title,
+        by,
+        time: dayjs(time * 1000).format('YYYY-MM-DD'),
+        url,
+      }));
+    },
+    enabled: storyIds.length > 0,
+  });
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -110,7 +100,7 @@ export default function Page({ params }: PageProps) {
         </TabsList>
       </Tabs>
       <hr />
-      {isLoading ? (
+      {isStoryIdsLoading || isStoriesLoading ? (
         <NewsListSkeleton />
       ) : (
         <div className="flex flex-col gap-2">
