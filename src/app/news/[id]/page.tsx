@@ -18,6 +18,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     type: string;
     url: string;
   };
+  console.log(data);
   return (
     <div>
       <div className="flex items-center gap-2">
@@ -29,7 +30,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       <p className="text-[14px]">{dayjs(data.time * 1000).format('YYYY-MM-DD')}</p>
       <hr className="my-4" />
       <p>score: {data.score}</p>
-      <Link href={data.url} target="_blank">{data.url}</Link>
+      {data.url && <Link href={data.url} target="_blank">{data.url}</Link>}
+      {data.text && <div className="whitespace-pre-line mt-3" dangerouslySetInnerHTML={{ __html: data.text }} />}
     </div>
   );
 }
