@@ -5,8 +5,8 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { NewsPagination } from '@/components/domains/news-pagination';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Pagination, PaginationContent, PaginationFirst, PaginationItem, PaginationLast, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const LIMIT = 10;
@@ -104,7 +104,7 @@ export default function Page() {
         {stories.map(({ id, title, by, time }) => (
           <Card className="flex flex-row" key={id}>
             <CardHeader className="w-12">
-              <Image alt="" height={48} src="https://picsum.photos/seed/1/48" unoptimized width={48} />
+              <Image alt="" height={48} src="https://picsum.photos/seed/1/48" width={48} />
             </CardHeader>
             <CardContent>
               <h3 className="font-bold text-[20px]">{title}</h3>
@@ -114,61 +114,12 @@ export default function Page() {
           </Card>
         ))}
       </div>
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationFirst onClick={() => setPage(1)} />
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationPrevious
-              onClick={() => {
-                const currentPageGroup = Math.floor((page - 1) / 10);
-                if (currentPageGroup > 0) {
-                  setPage((currentPageGroup - 1) * 10 + 1);
-                }
-              }}
-            />
-          </PaginationItem>
-          {(() => {
-            const totalPages = Math.ceil(storyIds.length / LIMIT);
-            const currentPageGroup = Math.floor((page - 1) / 10);
-            const startPage = currentPageGroup * 10 + 1;
-            const endPage = Math.min((currentPageGroup + 1) * 10, totalPages);
-            return Array.from({ length: endPage - startPage + 1 }).map((_, index) => {
-              const pageNumber = startPage + index;
-              return (
-                <PaginationItem key={pageNumber}>
-                  <PaginationLink
-                    isActive={page === pageNumber}
-                    onClick={() => setPage(pageNumber)}
-                  >
-                    {pageNumber}
-                  </PaginationLink>
-                </PaginationItem>
-              );
-            });
-          })()}
-          <PaginationItem>
-            <PaginationNext
-              onClick={() => {
-                const totalPages = Math.ceil(storyIds.length / LIMIT);
-                const currentPageGroup = Math.floor((page - 1) / 10);
-                if ((currentPageGroup + 1) * 10 < totalPages) {
-                  setPage((currentPageGroup + 1) * 10 + 1);
-                }
-              }}
-            />
-          </PaginationItem>
-          <PaginationItem>
-            <PaginationLast
-              onClick={() => {
-                const totalPages = Math.ceil(storyIds.length / LIMIT);
-                setPage(totalPages);
-              }}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+      <NewsPagination
+        itemsPerPage={LIMIT}
+        onPageChange={setPage}
+        page={page}
+        totalItems={storyIds.length}
+      />
     </div>
   );
 }
