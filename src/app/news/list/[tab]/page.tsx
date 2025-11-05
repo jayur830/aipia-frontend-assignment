@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { use, useCallback, useEffect, useState } from 'react';
 
+import { NewsListSkeleton } from '@/components/domains/news-list-skeleton';
 import { NewsPagination } from '@/components/domains/news-pagination';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -35,8 +36,10 @@ export default function Page({ params }: PageProps) {
   const [storyIds, setStoryIds] = useState<number[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [page, setPage] = useState<number>(pageParam);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const fetchStoryIds = useCallback(async () => {
+    setIsLoading(true);
     const response = await fetch(`https://hacker-news.firebaseio.com/v0/${tab}stories.json`);
     if (!response.ok) {
       throw new Error();
@@ -46,6 +49,7 @@ export default function Page({ params }: PageProps) {
   }, [tab]);
 
   const fetchPageStories = useCallback(async (page: number) => {
+    setIsLoading(true);
     const startIndex = (page - 1) * LIMIT;
     const endIndex = startIndex + LIMIT;
     const pageIds = storyIds.slice(startIndex, endIndex);
@@ -70,6 +74,7 @@ export default function Page({ params }: PageProps) {
       time: dayjs(time * 1000).format('YYYY-MM-DD'),
       url,
     })));
+    setIsLoading(false);
   }, [storyIds]);
 
   useEffect(() => {
@@ -105,22 +110,26 @@ export default function Page({ params }: PageProps) {
         </TabsList>
       </Tabs>
       <hr />
-      <div className="flex flex-col gap-2">
-        {stories.map(({ id, title, by, time }) => (
-          <Link href={`/news/${id}`} key={id} passHref>
-            <Card className="cursor-pointer flex flex-row items-center">
-              <CardHeader className="w-12">
-                <Image alt={title} className="max-w-12 h-12" height={48} src={`https://picsum.photos/seed/${id}/48`} unoptimized width={48} />
-              </CardHeader>
-              <CardContent>
-                <h3 className="font-bold text-[20px]">{title}</h3>
-                <i className="text-sm text-gray-500">{by}</i>
-                <p className="text-sm">{time}</p>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      {isLoading ? (
+        <NewsListSkeleton />
+      ) : (
+        <div className="flex flex-col gap-2">
+          {stories.map(({ id, title, by, time }) => (
+            <Link href={`/news/${id}`} key={id} passHref>
+              <Card className="cursor-pointer flex flex-row items-center">
+                <CardHeader className="w-12">
+                  <Image alt={title} className="max-w-12 h-12" height={48} src={`https://picsum.photos/seed/${id}/48`} unoptimized width={48} />
+                </CardHeader>
+                <CardContent>
+                  <h3 className="font-bold text-[20px]">{title}</h3>
+                  <i className="text-sm text-gray-500">{by}</i>
+                  <p className="text-sm">{time}</p>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
       <NewsPagination
         itemsPerPage={LIMIT}
         onPageChange={setPage}
