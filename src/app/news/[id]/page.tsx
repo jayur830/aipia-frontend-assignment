@@ -21,7 +21,6 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     type: string;
     url: string;
   };
-  console.log(data);
   return (
     <div>
       <div className="flex items-center gap-2">
